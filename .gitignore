@@ -1,0 +1,12 @@
+.exclude
+
+# runtime (created by the tool)
+uploads/
+.state/
+
+# build artifact
+*.zip
+
+# os
+.DS_Store
+Thumbs.db
