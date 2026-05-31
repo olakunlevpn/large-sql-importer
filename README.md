@@ -4,6 +4,8 @@ A single PHP file that imports large database dumps without hitting PHP upload l
 
 It streams the file instead of loading it into memory, so file size is not really a limit. If the import stops for any reason, you can resume it from where it left off.
 
+![Large SQL Importer](screenshot.png)
+
 ## Requirements
 
 - PHP 8.0 or newer with the mysqli extension (both are standard).
