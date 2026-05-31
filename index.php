@@ -1476,6 +1476,25 @@ $(function(){
     logWarnings(d.warnings);
     if(d.postError) log('⚠ Post-SQL error: '+d.postError);
     if(es){es.close();es=null;} finishUi();
+    if(!d.dryRun) starDialog();
+  }
+  function starDialog(){
+    const repo='https://github.com/olakunlevpn/large-sql-importer';
+    $('<div>').html(
+      '<div style="text-align:center;padding:6px 4px">'+
+      '<div style="font-size:34px;line-height:1">&#11088;</div>'+
+      '<div style="font-size:16px;font-weight:700;color:#2a3f4d;margin-top:8px">Import complete</div>'+
+      '<div style="font-size:13px;color:#6b7682;margin-top:6px">If this saved you time, please star the project on GitHub. It helps a lot.</div>'+
+      '</div>'
+    ).dialog({
+      title:'Done', modal:true, resizable:false, width:380,
+      buttons:[
+        {text:'Star on GitHub', click:function(){ window.open(repo,'_blank','noopener'); $(this).dialog('close'); }},
+        {text:'Maybe later', click:function(){ $(this).dialog('close'); }}
+      ],
+      open:function(){ $(this).closest('.ui-dialog').find('.ui-dialog-buttonpane button:eq(0)').addClass('btn btn-primary'); $(this).closest('.ui-dialog').find('.ui-dialog-buttonpane button:eq(1)').addClass('btn btn-default'); },
+      close:function(){ $(this).dialog('destroy').remove(); }
+    });
   }
   function finishUi(){ $('#stopBtn').prop('disabled',true); $('#startBtn').prop('disabled',false); loadFiles(); }
 
