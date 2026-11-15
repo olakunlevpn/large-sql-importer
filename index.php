@@ -1246,7 +1246,7 @@ $defaults = db_defaults();
       <div style="background:#f3f0fb;border:1px solid #e4dbf7;border-left:4px solid #673ab7;padding:10px 12px;border-radius:3px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:13px;color:#4a2c7a">
         <span style="font-size:16px">🧩</span>
         <div style="flex:1">
-          <b>Have multi-part chunks or encrypted backups from Telegram?</b>
+          <b>Have multi-part chunks or AES-256 encrypted database archives?</b>
           Use the Chunk Merger to automatically concatenate and decrypt them into a single dump.
         </div>
         <a href="merge.php" class="btn btn-default" style="font-size:12px;padding:4px 10px;border-color:#d1c4e9;color:#512da8">Open Chunk Merger &rarr;</a>

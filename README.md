@@ -11,7 +11,7 @@ It streams the file instead of loading it into memory, so file size is not reall
 The suite consists of two standalone single-file tools that work together seamlessly:
 
 1. **`index.php` (Database Importer):** Stream-imports `.sql`, `.sql.gz`, `.sql.bz2`, and `.zip` archives directly into MySQL/MariaDB with real-time SSE progress, crash resume, and zero memory exhaustion.
-2. **`merge.php` (Chunk Merger & Decryptor):** Assembles fragmented multi-part backup chunks (`.part*`, `.001`, `.enc`) from Telegram or cloud backup pipelines and decrypts client-side AES-256-CBC files into an import-ready `.sql` or `.sql.gz` dump.
+2. **`merge.php` (Chunk Merger & Decryptor):** Assembles fragmented multi-part backup chunks (`.part*`, `.001`, `.enc`) from cloud backup pipelines or split archives and decrypts client-side AES-256-CBC files into an import-ready `.sql` or `.sql.gz` dump.
 
 ---
 
@@ -47,7 +47,7 @@ If the import is interrupted, the file shows up as resumable. Select it and clic
 
 ## Multi-Part Chunks & AES-256 Decryption (`merge.php`)
 
-If your database backup was downloaded from Telegram or a cloud splitting tool:
+If your database backup is split into multiple chunk files or encrypted:
 
 1. Open `merge.php` in your browser (or click **🧩 Chunk Merger & Decryptor** from the top navigation bar).
 2. Drag and drop all your chunk parts (`.part0000`, `.part0001`, ..., `.part*.enc`) into the upload dropzone. The tool supports batch multi-file uploads.
