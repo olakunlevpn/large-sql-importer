@@ -67,15 +67,40 @@ function fmt_bytes($b)
     return round($b, $b >= 100 || $i == 0 ? 0 : 1) . ' ' . $u[$i];
 }
 
+function get_chunk_parts($base)
+{
+    $search = array_unique(array_merge(
+        (array) glob(UPLOAD_DIR . '/*'),
+        (array) glob(__DIR__ . '/*')
+    ));
+    $parts = array();
+    foreach ($search as $f) {
+        if (!is_file($f)) continue;
+        $name = basename($f);
+        if ($name === $base) continue;
+        if (strpos($name, $base . '.part') === 0 || strpos($name, $base . '.') === 0) {
+            if (preg_match('/(\.part[_\.]?\d+|\.\d{3,4})(?:\.enc)?$/i', $name)) {
+                $parts[] = $f;
+            }
+        }
+    }
+    natsort($parts);
+    return array_values($parts);
+}
+
 $action = param('action');
 
 /* ============================================================================
  * API ACTIONS
  * ========================================================================= */
 
-// Scan uploads/ and group chunk files
+// Scan uploads/ and root folder, then group chunk files
 if ($action === 'list_chunks') {
-    $files = (array) glob(UPLOAD_DIR . '/*');
+    $files = array_unique(array_merge(
+        (array) glob(UPLOAD_DIR . '/*'),
+        (array) glob(__DIR__ . '/*.part*'),
+        (array) glob(__DIR__ . '/*.sql.[0-9]*')
+    ));
     $groups = array();
     $standalones = array();
 
@@ -191,14 +216,10 @@ if ($action === 'upload_chunk') {
 if ($action === 'delete_set') {
     $base = safe_name(param('base'));
     $deleted = 0;
-    foreach ((array) glob(UPLOAD_DIR . '/*') as $f) {
-        $name = basename($f);
-        if (strpos($name, $base . '.part') === 0 || strpos($name, $base . '.') === 0) {
-            if ($name !== $base) {
-                @unlink($f);
-                $deleted++;
-            }
-        }
+    $parts = get_chunk_parts($base);
+    foreach ($parts as $f) {
+        @unlink($f);
+        $deleted++;
     }
     jout(array('ok' => true, 'deleted' => $deleted));
 }
@@ -209,14 +230,7 @@ if ($action === 'test_key') {
     $key  = (string) param('key');
     if ($key === '') jout(array('ok' => false, 'error' => 'Encryption key cannot be empty'));
 
-    $parts = array();
-    foreach ((array) glob(UPLOAD_DIR . '/*') as $f) {
-        $name = basename($f);
-        if (strpos($name, $base . '.part') === 0 || strpos($name, $base . '.') === 0) {
-            if ($name !== $base) $parts[] = $f;
-        }
-    }
-    natsort($parts);
+    $parts = get_chunk_parts($base);
     $firstPart = reset($parts);
 
     if (!$firstPart || !is_file($firstPart)) {
@@ -273,15 +287,7 @@ if ($action === 'merge') {
 
     if ($base === '') { $sse('error', array('error' => 'Invalid base filename')); exit; }
 
-    $parts = array();
-    foreach ((array) glob(UPLOAD_DIR . '/*') as $f) {
-        $name = basename($f);
-        if (strpos($name, $base . '.part') === 0 || strpos($name, $base . '.') === 0) {
-            if ($name !== $base) $parts[] = $f;
-        }
-    }
-    natsort($parts);
-    $parts = array_values($parts);
+    $parts = get_chunk_parts($base);
 
     if (empty($parts)) {
         $sse('error', array('error' => 'No chunk parts found for base: ' . $base));
@@ -584,6 +590,24 @@ if ($action === 'merge') {
   .callout-info{background:#eef5fb;border-color:#d9dde2;border-left-color:var(--cp-blue);color:#2a3f4d}
   .callout .ttl{font-weight:700}
 
+  /* ftp banner card */
+  .ftp-card{background:#f8fafc;border:1px solid #cbd5e1;border-left:4px solid var(--cp-blue);border-radius:5px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .ftp-badge{display:inline-flex;align-items:center;gap:6px;background:#e0f2fe;color:#0369a1;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;margin-bottom:8px}
+  .ftp-title{font-size:15px;font-weight:800;color:var(--cp-head);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .ftp-desc{font-size:13px;color:var(--cp-ink);line-height:1.5;margin-bottom:12px}
+  .ftp-path-box{display:flex;align-items:center;gap:8px;background:#ffffff;border:1px solid #cbd5e1;border-radius:5px;padding:8px 12px;margin-bottom:10px}
+  .ftp-path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:700;color:var(--cp-head);flex:1;overflow-x:auto;white-space:nowrap;user-select:all}
+  .copy-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--cp-blue-d);background:#f0f9ff;border:1px solid #bae6fd;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .copy-btn:hover{background:#e0f2fe;border-color:#7dd3fc;color:var(--cp-blue)}
+  .copy-btn.copied{background:#dcfce7;border-color:#86efac;color:#15803d}
+  .ftp-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px;font-size:12px;color:var(--cp-ink)}
+  .ftp-step{background:#ffffff;border:1px solid #e2e8f0;border-radius:4px;padding:9px 11px;line-height:1.4}
+  .ftp-step b{color:var(--cp-head)}
+  .or-divider{display:flex;align-items:center;text-align:center;color:#94a3b8;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin:18px 0 14px}
+  .or-divider::before,.or-divider::after{content:'';flex:1;border-bottom:1px solid #e2e8f0}
+  .or-divider::before{margin-right:12px}
+  .or-divider::after{margin-left:12px}
+
   /* dropzone */
   .dropzone{border:2px dashed var(--cp-border-in);background:var(--cp-soft);border-radius:3px;padding:24px;text-align:center;color:#7c8794;cursor:pointer}
   .dropzone.drag{border-color:var(--cp-blue);background:#eef8fe}
@@ -713,9 +737,69 @@ if ($action === 'merge') {
     <div class="phead">
       <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
       <h2>1 &middot; Upload Chunk Parts</h2>
-      <span class="right"><a href="#" id="refreshBtn">&#8635; Refresh Sets</a></span>
+      <span class="right"><a href="#" id="refreshBtn" title="Scan server folder for newly uploaded files">&#8635; Refresh Sets</a></span>
     </div>
     <div class="pbody">
+
+      <!-- FTP / SFTP DIRECT UPLOAD HERO CARD -->
+      <div class="ftp-card">
+        <div class="ftp-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>Recommended For Large 1 GB &ndash; 50 GB+ Backups</span>
+        </div>
+        <div class="ftp-title">
+          <span>FTP / SFTP Direct Server Upload</span>
+        </div>
+        <div class="ftp-desc">
+          Do not let your web browser struggle or timeout transferring multi-gigabyte files. You can upload all your <span class="mono">.part*</span>, <span class="mono">.enc</span>, or <span class="mono">.sql</span> backup chunks directly to this server folder using your preferred FTP client (<strong>FileZilla, Cyberduck, WinSCP</strong>), SFTP, <span class="mono">scp / rsync</span>, or cPanel/Plesk File Manager:
+        </div>
+
+        <div class="ftp-path-box">
+          <span style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.3px">Target Folder:</span>
+          <code id="ftpPath" class="ftp-path"><?php echo htmlspecialchars(UPLOAD_DIR); ?></code>
+          <button id="copyPathBtn" type="button" class="copy-btn" title="Copy exact server folder path to clipboard">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Copy Path</span>
+          </button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;margin-bottom:12px">
+          <span style="color:#64748b">Relative location: <b class="mono" style="color:#1e293b">uploads/</b> (inside the same folder as <span class="mono">merge.php</span>)</span>
+          <span>
+            <?php if (is_writable(UPLOAD_DIR)): ?>
+              <span style="color:#15803d;font-weight:700">✓ Directory is ready &amp; writable (0755)</span>
+            <?php else: ?>
+              <span style="color:#b91c1c;font-weight:700">⚠ Directory not writable &mdash; please run: chmod 755 uploads</span>
+            <?php endif; ?>
+          </span>
+        </div>
+
+        <div class="ftp-steps">
+          <div class="ftp-step">
+            <b style="color:var(--cp-blue-d)">1. Connect</b><br>
+            Open FileZilla, WinSCP, or SFTP and navigate to the directory above.
+          </div>
+          <div class="ftp-step">
+            <b style="color:var(--cp-blue-d)">2. Transfer Chunks</b><br>
+            Upload all split files (<span class="mono">.part01</span>, <span class="mono">.part02</span>, <span class="mono">.enc</span>, etc.) at once.
+          </div>
+          <div class="ftp-step">
+            <b style="color:var(--cp-blue-d)">3. Instant Detection</b><br>
+            Click the button below &mdash; all parts are grouped and validated automatically.
+          </div>
+        </div>
+
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button id="btnScanFtp" type="button" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:8px 16px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <span>Scan Server Folder for Uploaded Chunks</span>
+          </button>
+          <span style="font-size:12px;color:#64748b">Refreshes the chunk sets list below immediately</span>
+        </div>
+      </div>
+
+      <div class="or-divider">OR Upload via Browser (for smaller files &lt; 500 MB)</div>
+
       <div id="drop" class="dropzone">
         <input id="fileInput" type="file" multiple style="display:none">
         <div class="big">Drop your <b>.part*</b>, <b>.enc</b>, or split files here, or click to browse</div>
@@ -818,7 +902,11 @@ $(function(){
       const box = $('#chunkList').empty();
 
       if(!currentSets.length){
-        box.html('<div style="text-align:center;color:#9aa4ae;padding:24px">No multi-part chunk files found in uploads/ directory yet. Upload parts above to begin.</div>');
+        box.html('<div style="text-align:center;padding:32px 16px;color:#64748b">'+
+          '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.8" style="margin-bottom:10px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'+
+          '<div style="font-weight:700;color:#1e293b;font-size:14px;margin-bottom:4px">No chunk files detected on the server yet</div>'+
+          '<div style="font-size:13px;max-width:520px;margin:0 auto">Upload your <code class="mono">.part*</code>, <code class="mono">.enc</code>, or split files directly to <code class="mono" style="color:var(--cp-blue-d)">uploads/</code> via FTP/SFTP, or drag them into the browser box above.</div>'+
+        '</div>');
         return;
       }
 
@@ -855,6 +943,46 @@ $(function(){
       $('#chunkList').html('<div style="text-align:center;color:#c0392b;padding:24px">Failed to load chunk sets from server.</div>');
     });
   }
+
+  $('#copyPathBtn').on('click', function(e){
+    e.preventDefault();
+    const txt = $('#ftpPath').text().trim();
+    const btn = $(this);
+    const origHtml = btn.html();
+    const showCopied = function(){
+      btn.addClass('copied').html('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> <span>Copied!</span>');
+      setTimeout(function(){ btn.removeClass('copied').html(origHtml); }, 2200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(showCopied, function(){
+        legacyCopy(txt);
+        showCopied();
+      });
+    } else {
+      legacyCopy(txt);
+      showCopied();
+    }
+  });
+
+  function legacyCopy(val){
+    const ta = document.createElement('textarea');
+    ta.value = val;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+
+  $('#btnScanFtp').on('click', function(e){
+    e.preventDefault();
+    loadChunkSets();
+    const target = $('#chunkList').closest('.panel');
+    if(target.length){
+      $('html, body').animate({scrollTop: target.offset().top - 20}, 250);
+    }
+  });
 
   $('#refreshBtn').on('click', function(e){ e.preventDefault(); loadChunkSets(); });
   loadChunkSets();

@@ -27,6 +27,15 @@ There is nothing to install. Copy `index.php` into a folder on your site and ope
 
 The tool creates two folders next to itself on first run: `uploads` for the files you import and `.state` for resume data. Make sure the folder is writable.
 
+### Direct FTP / SFTP Upload (Recommended for 1 GB &ndash; 50 GB+ Backups)
+
+Instead of transferring huge multi-gigabyte files or 50+ chunk files through your browser, you can upload them directly to the `uploads/` folder on your server using:
+- **FTP clients:** FileZilla, Cyberduck, WinSCP, Transmit
+- **Secure protocols:** SFTP, `scp`, `rsync`
+- **Hosting panels:** cPanel File Manager, Plesk, Webmin
+
+The tool automatically detects files placed in `uploads/` (or the script root directory) and presents them ready for 1-click merge or database import.
+
 ## Usage
 
 1. Enter your database host, username, password, and database name, then click Test Connection. If a `wp-config.php` or `.env` file sits nearby, the fields are filled in for you.

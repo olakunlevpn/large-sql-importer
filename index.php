@@ -120,6 +120,15 @@ function safe_name($name)
     return $name !== '' ? $name : 'file';
 }
 
+function resolve_file_path($name)
+{
+    $p = UPLOAD_DIR . '/' . $name;
+    if (is_file($p)) return $p;
+    $pRoot = __DIR__ . '/' . $name;
+    if (is_file($pRoot)) return $pRoot;
+    return $p;
+}
+
 function is_allowed_file($name)
 {
     return (bool) preg_match('/\.sql(\.gz|\.bz2)?$/i', $name) || (bool) preg_match('/\.zip$/i', $name);
@@ -455,7 +464,14 @@ if ($action === 'test') {
 /* ---- list files ---- */
 if ($action === 'list') {
     $out = array();
-    foreach ((array) glob(UPLOAD_DIR . '/*') as $f) {
+    $search = array_unique(array_merge(
+        (array) glob(UPLOAD_DIR . '/*'),
+        (array) glob(__DIR__ . '/*.sql'),
+        (array) glob(__DIR__ . '/*.sql.gz'),
+        (array) glob(__DIR__ . '/*.sql.bz2'),
+        (array) glob(__DIR__ . '/*.zip')
+    ));
+    foreach ($search as $f) {
         if (!is_file($f) || !is_allowed_file($f)) continue;
         $size = filesize($f);
         $job  = job_id($f);
@@ -510,7 +526,7 @@ if ($action === 'upload') {
 /* ---- delete file ---- */
 if ($action === 'delete') {
     $name = safe_name(param('name'));
-    $path = UPLOAD_DIR . '/' . $name;
+    $path = resolve_file_path($name);
     if (is_file($path)) { @unlink(state_path(job_id($path))); @unlink($path); }
     jout(array('ok' => true));
 }
@@ -518,7 +534,7 @@ if ($action === 'delete') {
 /* ---- prepare import (store params, set offset) ---- */
 if ($action === 'prepare') {
     $name = safe_name(param('name'));
-    $path = UPLOAD_DIR . '/' . $name;
+    $path = resolve_file_path($name);
     if (!is_file($path)) jout(array('ok' => false, 'error' => 'File not found'));
 
     $db = array(
@@ -926,7 +942,7 @@ if ($action === 'run') {
 /* ---- preview dump head (no execution) ---- */
 if ($action === 'preview') {
     $name = safe_name(param('name'));
-    $path = UPLOAD_DIR . '/' . $name;
+    $path = resolve_file_path($name);
     if (!is_file($path)) jout(array('ok' => false, 'error' => 'File not found'));
 
     $kind = file_kind($path);
@@ -1246,6 +1262,14 @@ $defaults = db_defaults();
         <div id="upBar"></div>
       </div>
 
+      <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--cp-ink);background:#f8fafc;padding:8px 12px;border-radius:4px;border:1px solid #cbd5e1">
+        <div style="display:flex;align-items:center;gap:7px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color:var(--cp-blue-d);flex:0 0 auto"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+          <span><b>FTP / SFTP Direct Upload:</b> For 1 GB &ndash; 50 GB+ dumps, upload directly to <code id="indexFtpPath" class="mono" style="color:var(--cp-head);font-weight:700"><?php echo htmlspecialchars(UPLOAD_DIR); ?></code></span>
+        </div>
+        <button id="copyIndexFtpPathBtn" type="button" class="btn btn-default" style="padding:3px 9px;font-size:11px;font-weight:700" title="Copy folder path to clipboard">Copy Path</button>
+      </div>
+
       <div style="margin-top:16px;font-weight:700;color:#6b7682;font-size:12px;text-transform:uppercase;letter-spacing:.3px">Files on server</div>
       <div id="fileList"></div>
     </div>
@@ -1422,6 +1446,37 @@ $(function(){
     },function(){ notify('Preview request failed.','Error'); });
   });
   $('#refreshBtn').on('click',function(e){ e.preventDefault(); if($(this).hasClass('spinning'))return; loadFiles(); });
+
+  $('#copyIndexFtpPathBtn').on('click', function(e){
+    e.preventDefault();
+    const txt = $('#indexFtpPath').text().trim();
+    const btn = $(this);
+    const orig = btn.text();
+    const done = function(){
+      btn.text('✓ Copied!').css({color:'#15803d', borderColor:'#86efac'});
+      setTimeout(()=>{ btn.text(orig).css({color:'', borderColor:''}); }, 2200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, function(){
+        legacyCopy(txt);
+        done();
+      });
+    } else {
+      legacyCopy(txt);
+      done();
+    }
+  });
+
+  function legacyCopy(val){
+    const ta = document.createElement('textarea');
+    ta.value = val;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
 
   /* ---------- chunked upload ---------- */
   $('#upBar').progressbar({value:0});
