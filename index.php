@@ -1001,12 +1001,17 @@ $defaults = db_defaults();
 
   /* brand bar */
   .brandbar{background:#fff;border-bottom:1px solid var(--cp-border);box-shadow:0 1px 2px rgba(0,0,0,.04)}
-  .brandbar .inner{max-width:1000px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+  .brandbar .inner{max-width:1000px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .brandbar .logo{width:34px;height:34px;border-radius:5px;background:linear-gradient(135deg,#1ba0e2,#1577b8);display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto}
   .brandbar h1{font-size:17px;font-weight:900;color:var(--cp-head);margin:0;letter-spacing:-.2px}
-  .brandbar .sub{font-size:12px;color:#8a96a3;margin-left:auto}
-  .brandbar .ghlink{color:#5b6671;display:flex;align-items:center}
+  .brandbar .sub{font-size:12px;color:#8a96a3}
+  .brandbar .ghlink{color:#5b6671;display:flex;align-items:center;margin-left:auto}
   .brandbar .ghlink:hover{color:#1ba0e2}
+
+  .nav-tabs{display:flex;gap:6px;margin:0 12px}
+  .tab-link{padding:6px 12px;font-size:13px;font-weight:700;color:#5b6671;border-radius:4px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:background .15s,color .15s}
+  .tab-link:hover{background:#f0f4f8;color:var(--cp-blue);text-decoration:none}
+  .tab-link.active{background:#e1f1fb;color:#1577b8}
 
   /* breadcrumb */
   .crumbs{max-width:1000px;margin:0 auto;padding:10px 16px 0;font-size:13px;color:#7c8794}
@@ -1145,8 +1150,13 @@ $defaults = db_defaults();
     <div class="logo">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
     </div>
-    <h1>Large SQL Importer</h1>
-    <span class="sub">Resumable &middot; .sql / .sql.gz / .bz2 / .zip</span>
+    <h1>Large SQL Importer Suite</h1>
+    
+    <nav class="nav-tabs">
+      <a href="index.php" class="tab-link active">🗄️ Import Database</a>
+      <a href="merge.php" class="tab-link">🧩 Chunk Merger &amp; Decryptor</a>
+    </nav>
+
     <a class="ghlink" href="https://github.com/olakunlevpn/large-sql-importer" target="_blank" rel="noopener" title="View on GitHub">
       <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
     </a>
@@ -1194,6 +1204,15 @@ $defaults = db_defaults();
       <span class="right"><a href="#" id="refreshBtn">&#8635; Refresh</a></span>
     </div>
     <div class="pbody">
+      <div style="background:#f3f0fb;border:1px solid #e4dbf7;border-left:4px solid #673ab7;padding:10px 12px;border-radius:3px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:13px;color:#4a2c7a">
+        <span style="font-size:16px">🧩</span>
+        <div style="flex:1">
+          <b>Have multi-part chunks or encrypted backups from Telegram?</b>
+          Use the Chunk Merger to automatically concatenate and decrypt them into a single dump.
+        </div>
+        <a href="merge.php" class="btn btn-default" style="font-size:12px;padding:4px 10px;border-color:#d1c4e9;color:#512da8">Open Chunk Merger &rarr;</a>
+      </div>
+
       <div id="drop" class="dropzone">
         <input id="fileInput" type="file" accept=".sql,.gz,.sql.gz,.bz2,.sql.bz2,.zip" style="display:none">
         <div class="big">Drop <b>.sql</b>, <b>.sql.gz</b>, <b>.sql.bz2</b> or <b>.zip</b> here, or click to browse</div>
@@ -1313,6 +1332,7 @@ $(function(){
 
   /* ---------- file list ---------- */
   let selected=null;
+  const urlParamFile = new URLSearchParams(window.location.search).get('file');
   function badge(s){ const c={done:'b-done',running:'b-running',error:'b-error',paused:'b-paused',ready:'b-ready'}; return '<span class="badge '+(c[s]||'b-ready')+'">'+s+'</span>'; }
   function loadFiles(){
     $('#fileList').html('<div class="loading"><span class="cp-spin lg"></span> Loading files…</div>');
@@ -1333,7 +1353,11 @@ $(function(){
           (resumable?'<span class="tag-resumable">resumable</span>':'')+
           '<button class="del" title="Delete file and its import state">✕</button>'
         );
-        if(selected&&selected.name===f.name){ row.addClass('sel'); row.find('input').prop('checked',true); }
+        if((selected && selected.name===f.name) || (!selected && urlParamFile && urlParamFile===f.name)){
+          row.addClass('sel');
+          row.find('input').prop('checked',true);
+          selectFile(f);
+        }
         row.on('click',function(e){ if($(e.target).hasClass('del'))return; $('.filerow').removeClass('sel'); row.addClass('sel'); row.find('input').prop('checked',true); selectFile(f); });
         row.find('.del').on('click',function(e){ e.stopPropagation(); confirmDelete(f.name); });
         box.append(row);
