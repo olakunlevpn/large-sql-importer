@@ -591,19 +591,14 @@ if ($action === 'merge') {
   .callout .ttl{font-weight:700}
 
   /* ftp banner card */
-  .ftp-card{background:#f8fafc;border:1px solid #cbd5e1;border-left:4px solid var(--cp-blue);border-radius:5px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.03)}
-  .ftp-badge{display:inline-flex;align-items:center;gap:6px;background:#e0f2fe;color:#0369a1;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;margin-bottom:8px}
-  .ftp-title{font-size:15px;font-weight:800;color:var(--cp-head);margin-bottom:6px;display:flex;align-items:center;gap:8px}
-  .ftp-desc{font-size:13px;color:var(--cp-ink);line-height:1.5;margin-bottom:12px}
-  .ftp-path-box{display:flex;align-items:center;gap:8px;background:#ffffff;border:1px solid #cbd5e1;border-radius:5px;padding:8px 12px;margin-bottom:10px}
-  .ftp-path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:700;color:var(--cp-head);flex:1;overflow-x:auto;white-space:nowrap;user-select:all}
-  .copy-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--cp-blue-d);background:#f0f9ff;border:1px solid #bae6fd;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .ftp-card{background:#f8fafc;border:1px solid #cbd5e1;border-left:4px solid var(--cp-blue);border-radius:5px;padding:12px 14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .ftp-title{font-size:13px;font-weight:800;color:var(--cp-head);display:flex;align-items:center;gap:7px}
+  .ftp-path-box{display:flex;align-items:center;gap:8px;background:#ffffff;border:1px solid #cbd5e1;border-radius:5px;padding:6px 10px;flex-wrap:wrap}
+  .ftp-path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;font-weight:700;color:var(--cp-head);flex:1 1 240px;overflow-x:auto;white-space:nowrap;user-select:all}
+  .copy-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;font-size:11.5px;font-weight:700;color:var(--cp-blue-d);background:#f0f9ff;border:1px solid #bae6fd;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap}
   .copy-btn:hover{background:#e0f2fe;border-color:#7dd3fc;color:var(--cp-blue)}
   .copy-btn.copied{background:#dcfce7;border-color:#86efac;color:#15803d}
-  .ftp-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px;font-size:12px;color:var(--cp-ink)}
-  .ftp-step{background:#ffffff;border:1px solid #e2e8f0;border-radius:4px;padding:9px 11px;line-height:1.4}
-  .ftp-step b{color:var(--cp-head)}
-  .or-divider{display:flex;align-items:center;text-align:center;color:#94a3b8;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin:18px 0 14px}
+  .or-divider{display:flex;align-items:center;text-align:center;color:#94a3b8;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin:14px 0 12px}
   .or-divider::before,.or-divider::after{content:'';flex:1;border-bottom:1px solid #e2e8f0}
   .or-divider::before{margin-right:12px}
   .or-divider::after{margin-left:12px}
@@ -727,11 +722,6 @@ if ($action === 'merge') {
     <div>Use it, then <b>DELETE this file immediately</b>. Never leave it on a live or public server.</div>
   </div>
 
-  <div class="callout callout-info">
-    <div class="ttl">Multi-Part Chunk &amp; Decryption Hub</div>
-    <div>Use this tool to assemble fragmented multi-part chunks or AES-256 encrypted database archives. Once merged, you can jump straight into the database importer with 1-click.</div>
-  </div>
-
   <!-- 1. UPLOAD CHUNKS -->
   <div class="panel">
     <div class="phead">
@@ -741,60 +731,33 @@ if ($action === 'merge') {
     </div>
     <div class="pbody">
 
-      <!-- FTP / SFTP DIRECT UPLOAD HERO CARD -->
+      <!-- FTP / SFTP DIRECT UPLOAD COMPACT CARD -->
       <div class="ftp-card">
-        <div class="ftp-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          <span>Recommended For Large 1 GB &ndash; 50 GB+ Backups</span>
-        </div>
-        <div class="ftp-title">
-          <span>FTP / SFTP Direct Server Upload</span>
-        </div>
-        <div class="ftp-desc">
-          Do not let your web browser struggle or timeout transferring multi-gigabyte files. You can upload all your <span class="mono">.part*</span>, <span class="mono">.enc</span>, or <span class="mono">.sql</span> backup chunks directly to this server folder using your preferred FTP client (<strong>FileZilla, Cyberduck, WinSCP</strong>), SFTP, <span class="mono">scp / rsync</span>, or cPanel/Plesk File Manager:
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+          <div class="ftp-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color:var(--cp-blue-d)"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+            <span>FTP / SFTP Upload Folder</span>
+            <span class="badge b-parts" style="font-size:10px">Recommended for Large Files</span>
+          </div>
+          <span style="font-size:12px">
+            <?php if (is_writable(UPLOAD_DIR)): ?>
+              <span style="color:#15803d;font-weight:700">✓ Ready &amp; writable (0755)</span>
+            <?php else: ?>
+              <span style="color:#b91c1c;font-weight:700">⚠ Not writable (chmod 755 uploads)</span>
+            <?php endif; ?>
+          </span>
         </div>
 
         <div class="ftp-path-box">
-          <span style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.3px">Target Folder:</span>
           <code id="ftpPath" class="ftp-path"><?php echo htmlspecialchars(UPLOAD_DIR); ?></code>
           <button id="copyPathBtn" type="button" class="copy-btn" title="Copy exact server folder path to clipboard">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             <span>Copy Path</span>
           </button>
-        </div>
-
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;margin-bottom:12px">
-          <span style="color:#64748b">Relative location: <b class="mono" style="color:#1e293b">uploads/</b> (inside the same folder as <span class="mono">merge.php</span>)</span>
-          <span>
-            <?php if (is_writable(UPLOAD_DIR)): ?>
-              <span style="color:#15803d;font-weight:700">✓ Directory is ready &amp; writable (0755)</span>
-            <?php else: ?>
-              <span style="color:#b91c1c;font-weight:700">⚠ Directory not writable &mdash; please run: chmod 755 uploads</span>
-            <?php endif; ?>
-          </span>
-        </div>
-
-        <div class="ftp-steps">
-          <div class="ftp-step">
-            <b style="color:var(--cp-blue-d)">1. Connect</b><br>
-            Open FileZilla, WinSCP, or SFTP and navigate to the directory above.
-          </div>
-          <div class="ftp-step">
-            <b style="color:var(--cp-blue-d)">2. Transfer Chunks</b><br>
-            Upload all split files (<span class="mono">.part01</span>, <span class="mono">.part02</span>, <span class="mono">.enc</span>, etc.) at once.
-          </div>
-          <div class="ftp-step">
-            <b style="color:var(--cp-blue-d)">3. Instant Detection</b><br>
-            Click the button below &mdash; all parts are grouped and validated automatically.
-          </div>
-        </div>
-
-        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button id="btnScanFtp" type="button" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:8px 16px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            <span>Scan Server Folder for Uploaded Chunks</span>
+          <button id="btnScanFtp" type="button" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 12px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <span>Scan Folder</span>
           </button>
-          <span style="font-size:12px;color:#64748b">Refreshes the chunk sets list below immediately</span>
         </div>
       </div>
 
