@@ -6,6 +6,7 @@ uploads/
 
 # build artifact
 *.zip
+screencapture-*.png
 
 # os
 .DS_Store
