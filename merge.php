@@ -531,7 +531,7 @@ if ($action === 'merge') {
   :root{
     --cp-blue:#1ba0e2; --cp-blue-d:#178fcc; --cp-ink:#4a5564; --cp-head:#2a3f4d;
     --cp-border:#d9dde2; --cp-border-in:#c3cbd4; --cp-bg:#f0f2f4; --cp-soft:#fafbfc;
-    --cp-strip:#eef5fb;
+    --cp-strip:#eef5fb; --cp-muted:#7c8794;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -541,18 +541,27 @@ if ($action === 'merge') {
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 
   /* brand bar */
-  .brandbar{background:#fff;border-bottom:1px solid var(--cp-border);box-shadow:0 1px 2px rgba(0,0,0,.04)}
-  .brandbar .inner{max-width:1000px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .brandbar .logo{width:34px;height:34px;border-radius:5px;background:linear-gradient(135deg,#1ba0e2,#1577b8);display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto}
-  .brandbar h1{font-size:17px;font-weight:900;color:var(--cp-head);margin:0;letter-spacing:-.2px}
-  .brandbar .sub{font-size:12px;color:#8a96a3}
-  .brandbar .ghlink{color:#5b6671;display:flex;align-items:center;margin-left:auto}
-  .brandbar .ghlink:hover{color:#1ba0e2}
+  .brandbar{background:#fff;border-bottom:1px solid var(--cp-border);box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .brandbar .inner{max-width:1000px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .brand-left{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+  .brand-left:hover{text-decoration:none}
+  .brand-left .logo{width:34px;height:34px;border-radius:6px;background:linear-gradient(135deg,var(--cp-blue),var(--cp-blue-d));display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto;box-shadow:0 2px 4px rgba(23,143,204,.25)}
+  .brand-text{display:flex;flex-direction:column;line-height:1.25}
+  .brand-text h1{font-size:15px;font-weight:900;color:var(--cp-head);margin:0;letter-spacing:-.2px}
+  .brand-text .sub{font-size:11px;font-weight:600;color:var(--cp-muted)}
 
-  .nav-tabs{display:flex;gap:6px;margin:0 12px}
-  .tab-link{padding:6px 12px;font-size:13px;font-weight:700;color:#5b6671;border-radius:4px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:background .15s,color .15s}
-  .tab-link:hover{background:#f0f4f8;color:var(--cp-blue);text-decoration:none}
-  .tab-link.active{background:#e1f1fb;color:#1577b8}
+  /* segmented nav switcher */
+  .nav-switcher{display:inline-flex;align-items:center;background:#edf2f7;padding:3px;border-radius:7px;border:1px solid var(--cp-border);gap:2px}
+  .nav-btn{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;font-size:12.5px;font-weight:700;color:var(--cp-muted);border-radius:5px;text-decoration:none;transition:all .15s ease;line-height:1}
+  .nav-btn svg{flex:0 0 auto}
+  .nav-btn:hover{color:var(--cp-head);background:rgba(255,255,255,.6);text-decoration:none}
+  .nav-btn.active{background:#fff;color:var(--cp-blue-d);box-shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04)}
+  .nav-btn.active svg{stroke:var(--cp-blue-d)}
+
+  /* github button */
+  .gh-btn{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;font-size:12px;font-weight:700;color:var(--cp-ink);background:#f8fafc;border:1px solid var(--cp-border);border-radius:6px;text-decoration:none;transition:all .15s ease;line-height:1}
+  .gh-btn:hover{background:#fff;border-color:var(--cp-border-in);color:var(--cp-head);text-decoration:none;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .gh-btn svg{flex:0 0 auto}
 
   /* breadcrumb */
   .crumbs{max-width:1000px;margin:0 auto;padding:10px 16px 0;font-size:13px;color:#7c8794}
@@ -639,10 +648,13 @@ if ($action === 'merge') {
   .foot{max-width:1000px;margin:8px auto 28px;padding:14px 16px 0;border-top:1px solid var(--cp-border);text-align:center;font-size:13px;color:#8a96a3}
   .foot a{font-weight:700}
 
-  @media (max-width:600px){
+  /* responsive */
+  @media (max-width:720px){
     .brandbar .inner,.crumbs,.wrap,.foot{padding-left:12px;padding-right:12px}
-    .brandbar h1{font-size:16px}
-    .brandbar .sub{display:none}
+    .brandbar .inner{justify-content:space-between;row-gap:10px}
+    .brand-text .sub{display:none}
+    .nav-switcher{order:3;width:100%;justify-content:center}
+    .nav-btn{flex:1 1 50%;justify-content:center;text-align:center;padding:7px 8px;font-size:12px}
     .panel>.phead{flex-wrap:wrap;row-gap:8px}
     .panel>.phead .right{margin-left:0;width:100%}
     .btnrow .btn{flex:1 1 auto}
@@ -653,18 +665,30 @@ if ($action === 'merge') {
 
 <div class="brandbar">
   <div class="inner">
-    <div class="logo">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
-    </div>
-    <h1>Large SQL Importer</h1>
+    <a href="index.php" class="brand-left">
+      <div class="logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>Large SQL Importer</h1>
+        <span class="sub">Streaming &middot; Resumable &middot; Zero-Memory</span>
+      </div>
+    </a>
     
-    <nav class="nav-tabs">
-      <a href="index.php" class="tab-link">🗄️ Import Database</a>
-      <a href="merge.php" class="tab-link active">🧩 Chunk Merger &amp; Decryptor</a>
+    <nav class="nav-switcher" aria-label="Main Navigation">
+      <a href="index.php" class="nav-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+        <span>Import Database</span>
+      </a>
+      <a href="merge.php" class="nav-btn active">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+        <span>Chunk Merger &amp; Decryptor</span>
+      </a>
     </nav>
 
-    <a class="ghlink" href="https://github.com/olakunlevpn/large-sql-importer" target="_blank" rel="noopener" title="View on GitHub">
-      <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    <a class="gh-btn" href="https://github.com/olakunlevpn/large-sql-importer" target="_blank" rel="noopener" title="View Source on GitHub">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      <span>GitHub</span>
     </a>
   </div>
 </div>
