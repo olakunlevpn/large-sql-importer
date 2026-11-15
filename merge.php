@@ -83,11 +83,6 @@ if ($action === 'list_chunks') {
         if (!is_file($f)) continue;
         $name = basename($f);
 
-        // Match patterns:
-        // 1) filename.sql.gz.part0001 (optional .enc)
-        // 2) filename.sql.part01 (optional .enc)
-        // 3) filename.sql.gz.001
-        // 4) filename.part_001.enc
         $matched = false;
 
         if (preg_match('/^(.+?\.(?:sql|sql\.gz|sql\.bz2|tar\.gz))\.part[_\.]?(\d+)(?:\.(enc))?$/i', $name, $m)) {
@@ -140,13 +135,11 @@ if ($action === 'list_chunks') {
 
     $outGroups = array();
     foreach ($groups as $base => $g) {
-        // Sort parts naturally by index/name
         usort($g['parts'], function ($a, $b) {
             if ($a['index'] === $b['index']) return strcmp($a['name'], $b['name']);
             return $a['index'] - $b['index'];
         });
 
-        // Check sequence gaps
         $missing = array();
         $indices = array();
         foreach ($g['parts'] as $p) $indices[] = $p['index'];
@@ -236,7 +229,6 @@ if ($action === 'test_key') {
     $sample = $header . fread($fp, 64 * 1024);
     fclose($fp);
 
-    // Check OpenSSL Salted__ format
     if (substr($sample, 0, 8) === 'Salted__') {
         $salt = substr($sample, 8, 8);
         $ciphertext = substr($sample, 16);
@@ -250,7 +242,6 @@ if ($action === 'test_key') {
         }
         jout(array('ok' => true, 'format' => 'openssl_pbkdf2'));
     } else {
-        // Raw IV format (16 bytes IV prefix)
         $aesIv = substr($sample, 0, 16);
         $ciphertext = substr($sample, 16, 16384);
         $aesKey = hash('sha256', $key, true);
@@ -282,7 +273,6 @@ if ($action === 'merge') {
 
     if ($base === '') { $sse('error', array('error' => 'Invalid base filename')); exit; }
 
-    // Find and sort all parts
     $parts = array();
     foreach ((array) glob(UPLOAD_DIR . '/*') as $f) {
         $name = basename($f);
@@ -316,7 +306,6 @@ if ($action === 'merge') {
         if (substr($p, -4) === '.enc') { $isEncrypted = true; break; }
     }
 
-    // Check if the first chunk starts with Salted__
     $isSaltedOpenSSL = false;
     $firstFp = @fopen($parts[0], 'rb');
     if ($firstFp) {
@@ -331,7 +320,6 @@ if ($action === 'merge') {
         exit;
     }
 
-    // Fast path: Native OS CLI if available
     $canExec = function_exists('exec') && !empty(ini_get('disable_functions'))
         ? !in_array('exec', explode(',', ini_get('disable_functions')))
         : function_exists('exec');
@@ -360,7 +348,6 @@ if ($action === 'merge') {
         }
     }
 
-    // Pure PHP streaming engine (runs if native didn't or wasn't available)
     if (!$usedNative) {
         $outFp = @fopen($tempDest, 'wb');
         if (!$outFp) {
@@ -372,7 +359,6 @@ if ($action === 'merge') {
         $lastEmit = 0;
 
         if (!$isEncrypted) {
-            // Direct streaming concatenation
             foreach ($parts as $idx => $p) {
                 $inFp = @fopen($p, 'rb');
                 if (!$inFp) {
@@ -405,10 +391,7 @@ if ($action === 'merge') {
                 fclose($inFp);
             }
         } else {
-            // Decryption stream
             if ($isSaltedOpenSSL) {
-                // OpenSSL PBKDF2 stream decryption in PHP
-                // Read 16-byte header from the first chunk
                 $firstChunkFp = @fopen($parts[0], 'rb');
                 $saltHeader = fread($firstChunkFp, 16);
                 fclose($firstChunkFp);
@@ -418,12 +401,11 @@ if ($action === 'merge') {
                 $aesKey  = substr($derived, 0, 32);
                 $aesIv   = substr($derived, 32, 16);
 
-                // Use temp cipher file to decrypt full stream cleanly with openssl
                 $cipherTemp = $tempDest . '.cipher';
                 $cOut = @fopen($cipherTemp, 'wb');
                 foreach ($parts as $idx => $p) {
                     $inFp = @fopen($p, 'rb');
-                    if ($idx === 0) fread($inFp, 16); // skip Salted__ + salt
+                    if ($idx === 0) fread($inFp, 16);
                     while (!feof($inFp)) {
                         $chunkBuf = fread($inFp, BLOCK_SIZE);
                         if ($chunkBuf !== '' && $chunkBuf !== false) fwrite($cOut, $chunkBuf);
@@ -439,7 +421,6 @@ if ($action === 'merge') {
                 }
                 fclose($cOut);
 
-                // Decrypt the consolidated ciphertext in stream blocks
                 $cIn = @fopen($cipherTemp, 'rb');
                 $prevIv = $aesIv;
                 while (!feof($cIn)) {
@@ -455,7 +436,6 @@ if ($action === 'merge') {
                 @unlink($cipherTemp);
 
             } else {
-                // Individual chunk AES decryption (PHP Chunker format: 16-byte IV prefix per part)
                 $aesKey = hash('sha256', $key, true);
                 foreach ($parts as $idx => $p) {
                     $inFp = @fopen($p, 'rb');
@@ -509,11 +489,9 @@ if ($action === 'merge') {
         exit;
     }
 
-    // Atomic move to final destination
     if (file_exists($destPath)) @unlink($destPath);
     rename($tempDest, $destPath);
 
-    // Delete chunks if requested
     $deletedCount = 0;
     if ($deleteParts) {
         foreach ($parts as $p) {
@@ -544,7 +522,7 @@ if ($action === 'merge') {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chunk Merger &amp; Decryptor &middot; Large SQL Importer Suite</title>
+<title>Chunk Merger &amp; Decryptor &middot; Large SQL Importer</title>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap">
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -562,10 +540,10 @@ if ($action === 'merge') {
   a:hover{text-decoration:underline}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 
-  /* brand bar & nav tabs */
+  /* brand bar */
   .brandbar{background:#fff;border-bottom:1px solid var(--cp-border);box-shadow:0 1px 2px rgba(0,0,0,.04)}
   .brandbar .inner{max-width:1000px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .brandbar .logo{width:34px;height:34px;border-radius:5px;background:linear-gradient(135deg,#9c27b0,#673ab7);display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto}
+  .brandbar .logo{width:34px;height:34px;border-radius:5px;background:linear-gradient(135deg,#1ba0e2,#1577b8);display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto}
   .brandbar h1{font-size:17px;font-weight:900;color:var(--cp-head);margin:0;letter-spacing:-.2px}
   .brandbar .sub{font-size:12px;color:#8a96a3}
   .brandbar .ghlink{color:#5b6671;display:flex;align-items:center;margin-left:auto}
@@ -574,7 +552,7 @@ if ($action === 'merge') {
   .nav-tabs{display:flex;gap:6px;margin:0 12px}
   .tab-link{padding:6px 12px;font-size:13px;font-weight:700;color:#5b6671;border-radius:4px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:background .15s,color .15s}
   .tab-link:hover{background:#f0f4f8;color:var(--cp-blue);text-decoration:none}
-  .tab-link.active{background:#ede7fb;color:#673ab7}
+  .tab-link.active{background:#e1f1fb;color:#1577b8}
 
   /* breadcrumb */
   .crumbs{max-width:1000px;margin:0 auto;padding:10px 16px 0;font-size:13px;color:#7c8794}
@@ -585,28 +563,29 @@ if ($action === 'merge') {
   /* panel */
   .panel{background:#fff;border:1px solid var(--cp-border);border-radius:3px;margin-bottom:18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
   .panel>.phead{display:flex;align-items:center;gap:9px;background:var(--cp-strip);border-bottom:1px solid var(--cp-border);padding:10px 14px;border-radius:3px 3px 0 0}
-  .panel>.phead .ico{color:#673ab7;display:flex}
-  .panel>.phead h2{margin:0;font-size:14px;font-weight:700;color:#512da8}
+  .panel>.phead .ico{color:var(--cp-blue);display:flex}
+  .panel>.phead h2{margin:0;font-size:14px;font-weight:700;color:#157fc0}
   .panel>.phead .right{margin-left:auto}
   .pbody{padding:16px 14px}
 
   /* callouts */
   .callout{padding:11px 14px;border:1px solid;border-left-width:4px;border-radius:3px;margin-bottom:18px}
   .callout-danger{background:#fdeced;border-color:#f0c5c9;border-left-color:#d9534f;color:#9d3b3f}
-  .callout-info{background:#f3f0fb;border-color:#e4dbf7;border-left-color:#673ab7;color:#4a2c7a}
+  .callout-danger b{color:#c0392b}
+  .callout-info{background:#eef5fb;border-color:#d9dde2;border-left-color:var(--cp-blue);color:#2a3f4d}
   .callout .ttl{font-weight:700}
 
   /* dropzone */
-  .dropzone{border:2px dashed var(--cp-border-in);background:var(--cp-soft);border-radius:3px;padding:26px 18px;text-align:center;color:#7c8794;cursor:pointer;transition:border-color .15s,background .15s}
-  .dropzone.drag{border-color:#673ab7;background:#f8f5fc}
+  .dropzone{border:2px dashed var(--cp-border-in);background:var(--cp-soft);border-radius:3px;padding:24px;text-align:center;color:#7c8794;cursor:pointer}
+  .dropzone.drag{border-color:var(--cp-blue);background:#eef8fe}
   .dropzone .big{color:#5b6671;font-size:14px}
   .dropzone .sm{font-size:12px;color:#9aa4ae;margin-top:4px}
 
   /* buttons */
   .btn{display:inline-block;padding:7px 16px;border-radius:3px;border:1px solid transparent;font-size:14px;font-family:inherit;font-weight:700;cursor:pointer;line-height:1.3}
   .btn:focus{outline:none}
-  .btn-primary{background:#673ab7;border-color:#5e35b1;color:#fff}
-  .btn-primary:hover{background:#5e35b1}
+  .btn-primary{background:var(--cp-blue);border-color:var(--cp-blue-d);color:#fff}
+  .btn-primary:hover{background:var(--cp-blue-d)}
   .btn-success{background:#54a854;border-color:#4a974a;color:#fff}
   .btn-success:hover{background:#4a974a}
   .btn-default{background:#fff;border-color:var(--cp-border-in);color:var(--cp-ink)}
@@ -617,40 +596,57 @@ if ($action === 'merge') {
   .btnrow{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
 
   /* chunk set card */
-  .chunk-set{border:1px solid #d9dde2;border-radius:4px;background:#fff;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-  .chunk-set.valid{border-left:4px solid #54a854}
-  .chunk-set.invalid{border-left:4px solid #d9534f}
+  .chunk-set{border:1px solid var(--cp-border);border-left:4px solid var(--cp-blue);border-radius:3px;background:#fff;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .chunk-set.invalid{border-left-color:#d9534f}
   .chunk-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .chunk-head .title{font-size:15px;font-weight:900;color:#2a3f4d;word-break:break-all}
+  .chunk-head .title{font-size:15px;font-weight:700;color:var(--cp-head);word-break:break-all}
   .chunk-meta{font-size:13px;color:#6b7682;margin:6px 0 10px}
   .chunk-meta .warn{color:#c0392b;font-weight:700}
   .chunk-meta .ok{color:#2e7d32;font-weight:700}
 
   /* badges */
-  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;vertical-align:middle}
-  .b-purple{background:#ede7fb;color:#673ab7}
-  .b-enc{background:#fff3e0;color:#e65100}
-  .b-ok{background:#e8f5e9;color:#2e7d32}
-  .b-err{background:#ffebee;color:#c62828}
+  .badge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:2px 7px;border-radius:10px;vertical-align:middle}
+  .b-parts{background:#e1f1fb;color:#1577b8}
+  .b-enc{background:#fdf0e0;color:#c97a1f}
+  .b-ok{background:#e3f4e4;color:#2e7d32}
+  .b-err{background:#fbe4e4;color:#c0392b}
 
   /* progress */
   .ui-progressbar{height:22px;background:#e4e8ec;border:1px solid var(--cp-border-in);border-radius:3px;overflow:hidden;position:relative}
-  .ui-progressbar .ui-progressbar-value{background:linear-gradient(180deg,#9c27b0,#673ab7);border:0;margin:0;height:100%}
+  .ui-progressbar .ui-progressbar-value{background:linear-gradient(180deg,#39b0ee,#1ba0e2);border:0;margin:0;height:100%}
 
   .logbox{margin-top:14px;background:#1e2227;color:#cfd6dd;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;padding:11px 13px;height:160px;overflow:auto;border-radius:3px;white-space:pre-wrap;border:1px solid #11151a}
 
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px}
   .stat{border:1px solid #e4e8ec;border-radius:3px;background:var(--cp-soft);padding:10px;text-align:center}
-  .stat b{display:block;font-size:17px;font-weight:900;color:#2a3f4d}
+  .stat b{display:block;font-size:18px;font-weight:900;color:#2a3f4d}
   .stat span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:#9aa4ae;margin-top:3px}
 
   .field label{display:block;font-size:12px;font-weight:700;color:#6b7682;margin-bottom:4px}
   input.cp{width:100%;padding:7px 9px;border:1px solid var(--cp-border-in);border-radius:3px;font-size:14px;color:var(--cp-ink);background:#fff;font-family:inherit}
-  input.cp:focus{outline:none;border-color:#673ab7;box-shadow:0 0 0 2px rgba(103,58,183,.18)}
+  input.cp:focus{outline:none;border-color:var(--cp-blue);box-shadow:0 0 0 2px rgba(27,160,226,.18)}
+
+  /* jQuery UI dialog -> cPanel skin */
+  .ui-dialog{border:1px solid var(--cp-border-in);border-radius:3px;box-shadow:0 8px 28px rgba(0,0,0,.18);font-family:'Lato',Helvetica,Arial,sans-serif}
+  .ui-dialog .ui-dialog-titlebar{background:var(--cp-strip);border:0;border-bottom:1px solid var(--cp-border);border-radius:3px 3px 0 0;color:#157fc0;font-weight:700}
+  .ui-dialog .ui-dialog-content{color:var(--cp-ink);font-size:14px}
+  .ui-dialog .ui-dialog-buttonpane{border-top:1px solid var(--cp-border)}
+  .ui-widget-overlay{background:#1b2733;opacity:.35}
+  .ui-tooltip{background:#2a3f4d;color:#fff;border:0;border-radius:3px;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .ui-dialog{max-width:94vw!important}
 
   /* foot */
   .foot{max-width:1000px;margin:8px auto 28px;padding:14px 16px 0;border-top:1px solid var(--cp-border);text-align:center;font-size:13px;color:#8a96a3}
   .foot a{font-weight:700}
+
+  @media (max-width:600px){
+    .brandbar .inner,.crumbs,.wrap,.foot{padding-left:12px;padding-right:12px}
+    .brandbar h1{font-size:16px}
+    .brandbar .sub{display:none}
+    .panel>.phead{flex-wrap:wrap;row-gap:8px}
+    .panel>.phead .right{margin-left:0;width:100%}
+    .btnrow .btn{flex:1 1 auto}
+  }
 </style>
 </head>
 <body>
@@ -658,9 +654,9 @@ if ($action === 'merge') {
 <div class="brandbar">
   <div class="inner">
     <div class="logo">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
     </div>
-    <h1>Large SQL Importer Suite</h1>
+    <h1>Large SQL Importer</h1>
     
     <nav class="nav-tabs">
       <a href="index.php" class="tab-link">🗄️ Import Database</a>
@@ -676,6 +672,12 @@ if ($action === 'merge') {
 <div class="crumbs">Home <span>/</span> Databases <span>/</span> Chunk Merger &amp; Decryptor</div>
 
 <div class="wrap">
+
+  <!-- SECURITY WARNING -->
+  <div class="callout callout-danger">
+    <div class="ttl">Anyone with this URL can read, merge, and delete files on your server.</div>
+    <div>Use it, then <b>DELETE this file immediately</b>. Never leave it on a live or public server.</div>
+  </div>
 
   <div class="callout callout-info">
     <div class="ttl">Multi-Part Chunk &amp; Decryption Hub</div>
@@ -797,7 +799,7 @@ $(function(){
       }
 
       currentSets.forEach(function(g, idx){
-        const card = $('<div class="chunk-set '+(g.isComplete?'valid':'invalid')+'">');
+        const card = $('<div class="chunk-set '+(g.isComplete?'':'invalid')+'">');
         
         let statusHtml = '';
         if(g.isComplete){
@@ -806,7 +808,7 @@ $(function(){
           statusHtml = '<span class="warn">⚠ Missing sequence numbers: Part '+g.missing.join(', ')+'</span>';
         }
 
-        let badges = '<span class="badge b-purple">'+g.count+' parts</span> <span class="badge b-purple">'+esc(g.totalSizeh)+'</span>';
+        let badges = '<span class="badge b-parts">'+g.count+' parts</span> <span class="badge b-parts">'+esc(g.totalSizeh)+'</span>';
         if(g.isEncrypted) badges += ' <span class="badge b-enc">🔒 AES-256 Encrypted</span>';
         if(g.targetExists) badges += ' <span class="badge b-ok">Merged File Exists ('+esc(g.targetSizeh)+')</span>';
 
@@ -833,7 +835,6 @@ $(function(){
   $('#refreshBtn').on('click', function(e){ e.preventDefault(); loadChunkSets(); });
   loadChunkSets();
 
-  // Multi-file drag and drop
   $('#upBar').progressbar({value:0});
   const drop=$('#drop'), fileInput=$('#fileInput');
   drop.on('click',()=>fileInput.trigger('click'));
@@ -886,7 +887,6 @@ $(function(){
     nextFile();
   }
 
-  // Delete chunk set
   $(document).on('click', '.del-set-btn', function(){
     const base = $(this).data('base');
     if(!confirm('Are you sure you want to delete all chunk parts for "'+base+'"?')) return;
@@ -895,7 +895,6 @@ $(function(){
     });
   });
 
-  // Open merge dialog
   let activeMergeSet = null;
   $(document).on('click', '.open-merge-btn', function(){
     const idx = $(this).data('idx');
@@ -930,7 +929,6 @@ $(function(){
     $('#mergeModal').dialog('close');
   });
 
-  // Start merge
   $('#mergeBar').progressbar({value:0});
   let mergeEs = null;
 

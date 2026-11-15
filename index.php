@@ -1150,7 +1150,7 @@ $defaults = db_defaults();
     <div class="logo">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
     </div>
-    <h1>Large SQL Importer Suite</h1>
+    <h1>Large SQL Importer</h1>
     
     <nav class="nav-tabs">
       <a href="index.php" class="tab-link active">🗄️ Import Database</a>
